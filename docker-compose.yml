@@ -1,0 +1,72 @@
+version: '3.7'
+
+networks:
+  db:
+  cache:
+
+services:
+  db:
+    image: mariadb:10
+    restart: always
+    ports:
+      - 3306:3306 
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./data/mysql/data:/var/lib/mysql
+      - ./conf/mysql:/etc/mysql/conf.d
+    networks:
+      - db
+
+  cache:
+    image: redis:5
+    ports:
+      - 6379:6379
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      - cache
+    volumes:
+      - ./data/redis/data:/data
+      - ./conf/redis.conf:/usr/local/etc/redis/redis.conf
+
+  loader:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    command: ["tail", "-f", "/dev/null"]
+    environment:
+      PUBLIC_KEY: ${PUBLIC_KEY}
+      PRIVATE_KEY: ${PRIVATE_KEY}
+    depends_on:
+      - db
+    networks:
+      - db
+    working_dir: "/src/character_creators"
+    volumes:
+      - ./src:/src
+
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+      - loader
+      - cache
+    networks:
+      - db
+      - cache
+    environment:
+      FLASK_APP: api.py
+      FLASK_DEBUG: 1
+      FLASK_RUN_PORT: 8080
+    command: ["python", "-m", "flask", "run", "--host=0.0.0.0"]
+    working_dir: "/src/character_creators"
+    volumes:
+      - ./src:/src
+
