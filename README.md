@@ -1,6 +1,37 @@
 # Marvel Code Test
 
-![Running-Solution](https://raw.githubusercontent.com/faiyaz7283/gifs/master/mct.gif)
+![Running-Solution](https://raw.githubusercontent.com/faiyaz7283/gifs/master/marvel_challenge.gif)
+
+Successful result:
+```shell
+Creating network "marvel_code_test_db" with the default driver
+Creating network "marvel_code_test_cache" with the default driver
+Creating marvel_code_test_db_1    ... done
+Creating marvel_code_test_cache_1 ... done
+Creating marvel_code_test_loader_1 ... done
+Creating marvel_code_test_api_1    ... done
+Waiting for db (ctrl + c to exit)  success
+Load characters...
+Loading: 100%|█████████████████████████████████████████████████▉| 1492/1493 [06:50<00:00,  3.63it/s]
+Load characters completed
+Load creators...
+Loading: 100%|█████████████████████████████████████████████████▉| 5315/5317 [17:37<00:00,  5.03it/s]
+Load creators completed
+Load character_creators...
+Loading: 510000it [00:45, 11297.61it/s, batch 51/51]
+Load character_creators completed
+=================================================== test session starts ==================================================
+platform linux -- Python 3.8.1, pytest-5.3.5, py-1.8.1, pluggy-0.13.1 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /src
+collected 3 items
+
+tests/test_api.py::test_creators PASSED                                                                               [ 33%]
+tests/test_api.py::test_creators_with_name PASSED                                                                     [ 66%]
+tests/test_api.py::test_character_creators_by_id PASSED                                                               [100%]
+
+=================================================== 3 passed in 5.87s ====================================================
+```
 
 ### Running the project
 
