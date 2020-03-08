@@ -154,3 +154,6 @@ if __name__ == "__main__":
         loader.load_character_creators()
     else:
         logger.info("character_creators table exist and loaded")
+
+    logger.info(f"Total API calls: {marvel.calls}")
+    logger.info("Goodbye!")

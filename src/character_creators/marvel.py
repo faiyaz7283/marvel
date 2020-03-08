@@ -17,6 +17,7 @@ class MarvelApi:
     """
 
     def __init__(self, api_base, public_key, private_key, batch=100):
+        self.calls = 0
         self.api_base = api_base
         self.pb_key = public_key
         self.pr_key = private_key
@@ -61,13 +62,15 @@ class MarvelApi:
         :returns: Returns a dictionary
         :rtype: dict
         """
+        self.calls += 1
         entity_endpoint = f"{self.api_base}/{entity}"
         params=self._get_payload()
+        headers = {"Accept-Encoding": "gzip"}
         if limit:
             params["limit"] = limit
         if offset:
             params["offset"] = offset
-        return requests.get(entity_endpoint, params=params)
+        return requests.get(entity_endpoint, params=params, headers=headers)
 
     def get_total(self, entity):
         """
@@ -95,18 +98,27 @@ class MarvelApi:
         response = self.get_response(entity)
 
         if response.status_code == 200:
-            total = response.json()["data"]["total"]
-            results = response.json()["data"]["results"]
-            for result in results:
-                yield {key: result[key] for key in keys}
-            if total > self.batch:
-                offsets = self._get_offsets(total)
-                total_batches = len(offsets)
-                for ofs in offsets:
-                    response = self.get_response(entity, offset=ofs)
-                    results = response.json()["data"]["results"]
-                    for result in results:
-                        yield {key: result[key] for key in keys}
+            r1 = response.json()
+            if (("data" in r1) and
+                ("total" in r1["data"]) and
+                ("results" in r1["data"])
+            ):
+                data = r1["data"]
+                total = data["total"]
+                results = data["results"]
+                for result in results:
+                    yield {key: result[key] for key in keys}
+                if total > self.batch:
+                    offsets = self._get_offsets(total)
+                    total_batches = len(offsets)
+                    for ofs in offsets:
+                        response = self.get_response(entity, offset=ofs)
+                        if response.status_code == 200:
+                            r2 = response.json()
+                            if ("data" in r2) and ("results" in r2["data"]):
+                                results = r2["data"]["results"]
+                                for result in results:
+                                    yield {key: result[key] for key in keys}
 
 
     def _extract_ids(self, item, entity):
@@ -182,7 +194,6 @@ class MarvelApi:
         offsets = []
         for count in range(1, total + 1):
             if not count % self.batch:
-                offset = count + 1
-                if offset <= total:
-                    offsets.append(offset)
+                if count <= total:
+                    offsets.append(count)
         return offsets
